@@ -1,0 +1,21 @@
+新潟: 
+  新潟: 
+    prec_no: 54
+    block_no: '47604'
+  長岡: 
+    prec_no: 54 
+    block_no: 0529
+  高田: 
+    prec_no: 54
+    block_no: '47612'
+  三条: 
+    prec_no: 54
+    block_no: '0525'
+石川:
+  金沢:
+    prec_no: 56
+    block_no: '47605'
+  白山河内:
+    prec_no: 56
+    block_no: '0973'
+
