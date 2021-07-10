@@ -13,6 +13,7 @@ lxml = "^4.6.3"
 html5lib = "^1.1"
 beautifulsoup4 = "^4.9.3"
 influxdb = "^5.3.1"
+tqdm = "^4.61.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

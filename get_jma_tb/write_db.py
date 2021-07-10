@@ -1,7 +1,12 @@
+from pathlib import Path
 from typing import Any, List, Dict, Literal
 
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
+from influxdb import InfluxDBClient
+
+import settings
 
 
 def type_conv_a1(df: pd.DataFrame) -> pd.DataFrame:
@@ -101,7 +106,6 @@ def type_conv_s1(df: pd.DataFrame) -> pd.DataFrame:
                     val = float(val)
                 except:
                     val = np.nan
-                    
             elif col == '全天日射量(MJ/㎡)':
                 try:
                     val = float(val)
@@ -120,9 +124,6 @@ def type_conv_s1(df: pd.DataFrame) -> pd.DataFrame:
             elif col == '天気':
                 if val in ['///', '--']:
                     val == np.nan
-            elif col == '雲量':
-                if val in ['///', '--']:
-                    val == np.nan
             elif col == '視程(km)':
                 try:
                     val = float(val)
@@ -130,4 +131,35 @@ def type_conv_s1(df: pd.DataFrame) -> pd.DataFrame:
                     val = np.nan
             vals.append(val)
         df[col] = vals
+    df['雲量'] = df['雲量'].astype(str)
     return df
+
+
+def write(area: str) -> None:
+    client = InfluxDBClient(**settings.SETTINGS['InfluxDB'])
+    csvdir = Path(__file__).parent / 'data' / f'{area}'
+    csvfiles = list(csvdir.glob('**/*.csv'))
+    for csvfile in tqdm(csvfiles):
+        prefecture: str = csvfile.parents[3].name
+        place: str = csvfile.parents[2].name
+        df: pd.DataFrame = pd.read_csv(csvfile, index_col=0)
+        if place in ['金沢', '新潟', '高田']:
+            df = type_conv_s1(df)
+        else:
+            df = type_conv_a1(df)
+        for timestamp, values in zip(df.index, df.values):
+            fields = {}
+            for col, value in zip(df.columns ,values):
+                if not pd.isna(value):
+                    fields[col] = value
+            lineprotocol = [{
+                'time': timestamp.replace(' ', 'T') + '+09:00',
+                'measurement': 'weather',
+                'tags': {'prefecture': prefecture, 'area': place},
+                'fields': fields
+            }]
+            client.write_points(lineprotocol)
+    return
+
+write('新潟')
+write('石川')
